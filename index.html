@@ -361,7 +361,7 @@
             const invLines = invText.split('\n');
             for (let i = 0; i < invLines.length; i++) {
                 const cols = invLines[i].split('\t').map(c => c.trim());
-                const qty = safeParseInt(cols[4]);
+                const qty = safeParseInt(cols[3]);
                 
                 if (cols.length >= 10 && qty > 0) {
                     const code = cols[1];
@@ -444,4 +444,5 @@
 </script>
 
 </body>
+
 </html>
