@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黃照興交易對帳單系統</title>
+    <style>
+        /* === 網頁視覺設計 (CSS) === */
+        body { font-family: 'Microsoft JhengHei', sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 15px; }
+        .container { max-width: 950px; margin: 0 auto; }
+        .input-section { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
+        .input-box { flex: 1; }
+        textarea { width: 100%; height: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; font-family: monospace; white-space: pre; }
+        input[type="text"], select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; }
+        button { background-color: #2c3e50; color: white; border: none; padding: 8px 20px; font-size: 14px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; transition: background 0.3s; margin-top: 5px; }
+        button:hover { background-color: #1a252f; }
+        
+        /* === 報表顯示區 === */
+        #report-section { background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
+        
+        th, td { border: 1px solid black; padding: 2px 3px; text-align: center; line-height: 1.1; white-space: nowrap; } 
+        th { background-color: yellow !important; font-weight: bold; color: black; }
+        
+        .table-title { background-color: #e0e0e0; color: black; font-size: 14px; font-weight: bold; text-align: center; margin: 10px 0 3px 0; padding: 3px; }
+        
+        .side-by-side { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; page-break-inside: avoid; }
+        .side-left { width: 48%; }
+        .side-right { width: 48%; }
+
+        /* === 列印專屬排版 === */
+        @page { size: A4 portrait; margin: 5mm; } 
+        @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body { background-color: white; padding: 0; }
+            .no-print { display: none !important; }
+            #report-section { box-shadow: none; display: block !important; padding: 0; }
+            table { font-size: 11px; margin-bottom: 5px; } 
+            .table-title { font-size: 13px; margin: 5px 0 2px 0; padding: 2px; } 
+            #report-section { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="input-section no-print">
+        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v8.4 框線修復版)</h3>
+        
+        <div class="input-group">
+            <div class="input-box">
+                <label style="font-size: 13px;"><b>▶ 前日【累計成交】</b></label>
+                <input type="text" id="prev-trans-total">
+            </div>
+            <div class="input-box">
+                <label style="font-size: 13px;"><b>▶ 前日【累計損益】</b></label>
+                <input type="text" id="prev-pl-total">
+            </div>
+            <div class="input-box">
+                <label style="font-size: 13px;"><b>▶ 前日【銀行餘額】</b></label>
+                <input type="text" id="prev-bank-total">
+            </div>
+        </div>
+
+        <div class="input-group" style="background-color: #eef5f9; padding: 10px; border-radius: 5px; border: 1px dashed #b3d4fc;">
+            <div class="input-box" style="flex: 0.6;">
+                <label style="font-size: 13px;"><b>📅 選擇月份</b></label>
+                <select id="month-select">
+                    <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+                    <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+                    <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+                    <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+                </select>
+            </div>
+            <div class="input-box">
+                <label style="font-size: 13px;"><b>成交金額</b></label>
+                <input type="text" id="month-trans">
+            </div>
+            <div class="input-box">
+                <label style="font-size: 13px;"><b>已實現損益</b></label>
+                <input type="text" id="month-pl">
+            </div>
+            <div class="input-box">
+                <label style="font-size: 13px;"><b>折讓</b></label>
+                <input type="text" id="month-discount">
+            </div>
+            <div class="input-box" style="flex: 0.7;">
+                <button type="button" onclick="saveMonthData()" style="margin: 0; background-color: #0078d7; font-size: 13px;">💾 記憶此月</button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div class="input-box">
+                <label style="font-size: 14px;"><b>1. 請貼上【當日交易匯總】</b></label>
+                <textarea id="raw-trans"></textarea>
+            </div>
+            <div class="input-box">
+                <label style="font-size: 14px;"><b>2. 請貼上【未實現損益(庫存)】</b></label>
+                <textarea id="raw-inv"></textarea>
+            </div>
+        </div>
+        <button onclick="processData()">產生報表並列印</button>
+    </div>
+
+    <div id="report-section">
+        <div style="text-align: center; margin-bottom: 10px;">
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 3px;">黃照興交易對帳單</div>
+            <div style="font-size: 13px;">日期： <span id="report-date" style="background-color: yellow; padding: 1px 15px; font-weight: bold;"></span></div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
+            <div style="font-size: 14px; font-weight: bold;">
+                <span style="background-color: #e0e0e0; padding: 4px 15px; display: inline-block;">本日總成交 <span id="today-amount" style="font-weight: 900; font-size: 16px; margin-left: 5px;">0</span></span>
+            </div>
+            <div style="font-size: 14px; font-weight: bold;">
+                <span style="background-color: yellow; padding: 4px 15px; display: inline-block;">本月累計 <span id="accum-trans-amount" style="font-weight: 900; font-size: 16px; margin-left: 5px;">0</span></span>
+            </div>
+        </div>
+
+        <table id="trans-table" style="margin-bottom: 10px;">
+            <thead>
+                <tr>
+                    <th>股票代碼</th><th>股票名稱</th><th>交易別</th><th>B/S</th>
+                    <th>價格</th><th>張數</th><th>成交金額</th><th>應收付</th><th>已實現損益</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="table-title">本日庫存明細</div>
+        <table id="inv-whole-table" style="margin-bottom: 10px;">
+            <thead>
+                <tr>
+                    <th>股票代碼</th><th>股票名稱</th><th>交易別</th><th>均價</th><th>張數</th><th>市價</th><th>浮動盈虧</th><th>庫存市值</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="side-by-side">
+            <div class="side-left">
+                <div class="table-title" style="margin-top: 0;">零股庫存明細</div>
+                <table id="inv-odd-table">
+                    <thead>
+                        <tr>
+                            <th>股票代碼</th><th>股票名稱</th><th>股數</th><th>市價</th><th>庫存市值</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="side-right">
+                <div class="table-title" style="margin-top: 0;">月累積成交金額及月累計已實現損益</div>
+                <table id="monthly-table" style="margin-bottom: 0;">
+                    <thead>
+                        <tr>
+                            <th>月份</th>
+                            <th>成交金額</th>
+                            <th>已實現損益</th>
+                            <th>折讓</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthly-tbody">
+                        </tbody>
+                    <tbody>
+                        <tr><td colspan="4" style="border: none; height: 5px;"></td></tr>
+                        <tr>
+                            <td style="font-weight: bold; text-align: center;">日期</td>
+                            <td colspan="3" style="font-weight: bold; text-align: center;">本日銀行可用餘額</td>
+                        </tr>
+                        <tr>
+                            <td id="bank-date" style="text-align: center; font-size: 13px; font-weight: bold;"></td>
+                            <td colspan="3" id="bank-balance-amount" style="text-align: center; font-size: 15px; font-weight: 900;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let monthlyData = {};
+
+    window.onload = function() {
+        const savedTrans = localStorage.getItem('savedTransTotal');
+        if (savedTrans) document.getElementById('prev-trans-total').value = savedTrans;
+
+        const savedPL = localStorage.getItem('savedPLTotal');
+        if (savedPL) document.getElementById('prev-pl-total').value = savedPL;
+
+        const savedBank = localStorage.getItem('savedBankTotal');
+        if (savedBank) document.getElementById('prev-bank-total').value = savedBank;
+
+        const savedMonthlyObj = localStorage.getItem('monthlyDataObj');
+        if (savedMonthlyObj) {
+            monthlyData = JSON.parse(savedMonthlyObj);
+        }
+
+        document.getElementById('month-select').addEventListener('change', function() {
+            const m = this.value;
+            const d = monthlyData[m] || { trans: '', pl: '', discount: '' };
+            document.getElementById('month-trans').value = d.trans !== '' ? d.trans : '';
+            document.getElementById('month-pl').value = d.pl !== '' ? d.pl : '';
+            document.getElementById('month-discount').value = d.discount !== '' ? d.discount : '';
+        });
+
+        document.getElementById('month-select').dispatchEvent(new Event('change'));
+        renderMonthlyTable();
+    }
+
+    function saveMonthData() {
+        const m = document.getElementById('month-select').value;
+        const transStr = document.getElementById('month-trans').value.trim();
+        const plStr = document.getElementById('month-pl').value.trim();
+        const discountStr = document.getElementById('month-discount').value.trim();
+        
+        monthlyData[m] = {
+            trans: transStr === '' ? '' : safeParseInt(transStr),
+            pl: plStr === '' ? '' : safeParseInt(plStr),
+            discount: discountStr === '' ? '' : safeParseInt(discountStr)
+        };
+        
+        localStorage.setItem('monthlyDataObj', JSON.stringify(monthlyData));
+        renderMonthlyTable();
+        alert(`✅ 已成功記憶 ${m} 月的資料！`);
+    }
+
+    function renderMonthlyTable() {
+        const tbody = document.getElementById('monthly-tbody');
+        let html = '';
+        let sumTrans = 0;
+        let sumPL = 0;
+        let sumDiscount = 0;
+
+        for (let i = 1; i <= 12; i++) {
+            const d = monthlyData[i] || { trans: '', pl: '', discount: '' };
+            html += `<tr>
+                <td>${i}月</td>
+                <td style="text-align: right; padding-right:5px;">${d.trans === '' ? '' : formatNumber(d.trans)}</td>
+                <td style="text-align: right; padding-right:5px;">${d.pl === '' ? '' : formatNumber(d.pl)}</td>
+                <td style="text-align: right; padding-right:5px;">${d.discount === '' ? '' : formatNumber(d.discount)}</td>
+            </tr>`;
+            
+            sumTrans += Number(d.trans) || 0;
+            sumPL += Number(d.pl) || 0;
+            sumDiscount += Number(d.discount) || 0;
+        }
+        
+        html += `<tr style="font-weight:bold;">
+            <td>合計</td>
+            <td style="text-align: right; padding-right:5px;">${sumTrans === 0 ? '' : formatNumber(sumTrans)}</td>
+            <td style="text-align: right; padding-right:5px;">${sumPL === 0 ? '' : formatNumber(sumPL)}</td>
+            <td style="text-align: right; padding-right:5px;">${sumDiscount === 0 ? '' : formatNumber(sumDiscount)}</td>
+        </tr>`;
+        
+        tbody.innerHTML = html;
+    }
+
+    function safeParseInt(val) {
+        if (!val) return 0;
+        const cleanVal = String(val).replace(/,/g, '');
+        return parseInt(cleanVal, 10) || 0;
+    }
+
+    function formatNumber(val) {
+        if (!val && val !== 0) return "0";
+        const cleanNum = String(val).replace(/,/g, '');
+        if (isNaN(cleanNum)) return val;
+        return Number(cleanNum).toLocaleString('en-US');
+    }
+
+    function processData() {
+        const transText = document.getElementById('raw-trans').value.trim();
+        const invText = document.getElementById('raw-inv').value.trim();
+        
+        const prevTransInput = safeParseInt(document.getElementById('prev-trans-total').value);
+        const prevPLInput = safeParseInt(document.getElementById('prev-pl-total').value);
+        const prevBankInput = safeParseInt(document.getElementById('prev-bank-total').value);
+
+        if (!transText && !invText) {
+            alert("請至少貼上一邊的資料喔！");
+            return;
+        }
+
+        let totalTransAmount = 0;
+        let totalNetPay = 0;
+        let totalPL = 0;
+        
+        let totalWholePL = 0;
+        let totalWholeValue = 0;
+        let totalOddValue = 0;
+
+        let transHtml = '';
+        let invWholeHtml = '';
+        let invOddHtml = '';
+
+        if (transText) {
+            const transLines = transText.split('\n');
+            for (let i = 0; i < transLines.length; i++) {
+                const cols = transLines[i].split('\t').map(c => c.trim());
+                const qty = safeParseInt(cols[6]);
+                
+                if (cols.length >= 10 && qty > 0) {
+                    const code = cols[4];
+                    const name = cols[5];
+                    const type = cols[2];
+                    const bs = (cols[3] === '買' || cols[3] === 'B') ? 'B' : 'S';
+                    const price = cols[7];
+                    
+                    const amount = safeParseInt(cols[8]); 
+                    const netPayVal = safeParseInt(cols[13]);
+                    const plVal = safeParseInt(cols[14]);
+
+                    totalTransAmount += amount;
+                    totalNetPay += netPayVal;
+                    totalPL += plVal;
+
+                    transHtml += `<tr>
+                        <td>${code}</td><td>${name}</td><td>${type}</td>
+                        <td>${bs}</td>
+                        <td>${price}</td><td>${qty / 1000}</td>
+                        <td>${formatNumber(amount)}</td><td>${formatNumber(netPayVal)}</td><td>${formatNumber(plVal)}</td>
+                    </tr>`;
+                }
+            }
+            
+            const newPLTotal = prevPLInput + totalPL;
+            
+            // 💡 魔法對齊區修復：把 hidden 全部換成 none！
+            transHtml += `
+            <tr style="font-weight: bold; background-color: #fcfcff;">
+                <td colspan="6" style="text-align: right; padding-right: 15px;">本日總計：</td>
+                <td>${formatNumber(totalTransAmount)}</td>
+                <td>${formatNumber(totalNetPay)}</td>
+                <td>${formatNumber(totalPL)}</td>
+            </tr>
+            <tr>
+                <td colspan="9" style="border: none; height: 15px; background-color: white;"></td>
+            </tr>
+            <tr>
+                <td colspan="7" style="border: none; background-color: white;"></td>
+                <td style="border: 1px solid black; text-align: center; background-color: white; font-weight: bold; font-size: 13px;">本日損益</td>
+                <td style="border: 1px solid black; background-color: yellow !important; text-align: right; padding-right: 8px; font-weight: 900; font-size: 14px;">${formatNumber(totalPL)}</td>
+            </tr>
+            <tr>
+                <td colspan="7" style="border: none; background-color: white;"></td>
+                <td style="border: 1px solid black; text-align: center; background-color: white; font-weight: bold; font-size: 13px;">前日損益</td>
+                <td style="border: 1px solid black; background-color: yellow !important; text-align: right; padding-right: 8px; font-weight: 900; font-size: 14px;">${formatNumber(prevPLInput)}</td>
+            </tr>
+            <tr>
+                <td colspan="7" style="border: none; background-color: white;"></td>
+                <td style="border: 1px solid black; text-align: center; background-color: white; font-weight: bold; font-size: 13px;">本月累計</td>
+                <td style="border: 1px solid black; background-color: yellow !important; text-align: right; padding-right: 8px; font-weight: 900; font-size: 14px;">${formatNumber(newPLTotal)}</td>
+            </tr>`;
+        }
+
+        if (invText) {
+            const invLines = invText.split('\n');
+            for (let i = 0; i < invLines.length; i++) {
+                const cols = invLines[i].split('\t').map(c => c.trim());
+                const qty = safeParseInt(cols[4]);
+                
+                if (cols.length >= 10 && qty > 0) {
+                    const code = cols[1];
+                    const name = cols[2];
+                    const price = cols[8];
+                    
+                    const type = "融資"; 
+                    const avgPrice = cols[8] || "-"; 
+                    
+                    const valueVal = safeParseInt(cols[5]);
+                    const plVal = safeParseInt(cols[11]);
+
+                    if (name !== '彥武' && code !== '') {
+                        if (qty % 1000 === 0) {
+                            totalWholePL += plVal;
+                            totalWholeValue += valueVal;
+                            invWholeHtml += `<tr>
+                                <td>${code}</td><td>${name}</td><td>${type}</td><td>${avgPrice}</td><td>${qty / 1000}</td>
+                                <td>${price}</td><td>${formatNumber(plVal)}</td><td>${formatNumber(valueVal)}</td>
+                            </tr>`;
+                        } else {
+                            totalOddValue += valueVal;
+                            invOddHtml += `<tr>
+                                <td>${code}</td><td>${name}</td><td>${qty}</td>
+                                <td>${price}</td><td>${formatNumber(valueVal)}</td>
+                            </tr>`;
+                        }
+                    }
+                }
+            }
+            
+            if (invWholeHtml !== '') {
+                invWholeHtml += `
+                <tr style="font-weight: bold;">
+                    <td colspan="6" style="text-align: right; padding-right: 15px;">整股總計：</td>
+                    <td>${formatNumber(totalWholePL)}</td>
+                    <td>${formatNumber(totalWholeValue)}</td>
+                </tr>`;
+            }
+            if (invOddHtml !== '') {
+                invOddHtml += `
+                <tr style="font-weight: bold;">
+                    <td colspan="4" style="text-align: right; padding-right: 15px;">零股總計：</td>
+                    <td>${formatNumber(totalOddValue)}</td>
+                </tr>`;
+            }
+        }
+
+        const today = new Date();
+        const month = today.getMonth() + 1;
+        const dateStr = `${month}月${today.getDate()}日`;
+        const fullDateStr = `${today.getFullYear()}/${month}/${today.getDate()}`;
+        
+        document.getElementById('report-date').innerText = dateStr;
+        document.getElementById('bank-date').innerText = fullDateStr;
+
+        const newTransTotal = prevTransInput + totalTransAmount;
+        const newPLTotal = prevPLInput + totalPL;
+        const newBankTotal = prevBankInput + totalNetPay;
+
+        document.getElementById('today-amount').innerText = formatNumber(totalTransAmount);
+        document.getElementById('accum-trans-amount').innerText = formatNumber(newTransTotal);
+
+        document.getElementById('bank-balance-amount').innerText = formatNumber(newBankTotal);
+
+        localStorage.setItem('savedTransTotal', newTransTotal);
+        localStorage.setItem('savedPLTotal', newPLTotal);
+        localStorage.setItem('savedBankTotal', newBankTotal);
+        
+        renderMonthlyTable();
+        
+        document.querySelector('#trans-table tbody').innerHTML = transHtml || '<tr><td colspan="9">無交易資料</td></tr>';
+        document.querySelector('#inv-whole-table tbody').innerHTML = invWholeHtml || '<tr><td colspan="8">無整股庫存資料</td></tr>';
+        document.querySelector('#inv-odd-table tbody').innerHTML = invOddHtml || '<tr><td colspan="5">無零股庫存資料</td></tr>';
+
+        document.getElementById('report-section').style.display = 'block';
+
+        setTimeout(() => { window.print(); }, 500);
+    }
+</script>
+
+</body>
+</html>
