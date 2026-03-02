@@ -11,8 +11,11 @@
         .input-section { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px; }
         .input-group { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
         .input-box { flex: 1; }
-        textarea { width: 100%; height: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; font-family: monospace; white-space: pre; }
-        input[type="text"], select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; }
+        
+        /* 💡 把輸入框裡的字體也都設定為粗體 */
+        textarea { width: 100%; height: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; font-family: monospace; white-space: pre; font-weight: bold; }
+        input[type="text"], select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; font-weight: bold; }
+        
         button { background-color: #2c3e50; color: white; border: none; padding: 8px 20px; font-size: 14px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; transition: background 0.3s; margin-top: 5px; }
         button:hover { background-color: #1a252f; }
         
@@ -20,7 +23,8 @@
         #report-section { background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
         
-        th, td { border: 1px solid black; padding: 2px 3px; text-align: center; line-height: 1.1; white-space: nowrap; } 
+        /* 💡 在這裡加入 font-weight: bold; 讓所有表格資料(td)都變成粗體 */
+        th, td { border: 1px solid black; padding: 2px 3px; text-align: center; line-height: 1.1; white-space: nowrap; font-weight: bold; } 
         th { background-color: yellow !important; font-weight: bold; color: black; }
         
         .table-title { background-color: #e0e0e0; color: black; font-size: 14px; font-weight: bold; text-align: center; margin: 10px 0 3px 0; padding: 3px; }
@@ -28,6 +32,11 @@
         .side-by-side { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; page-break-inside: avoid; }
         .side-left { width: 48%; }
         .side-right { width: 48%; }
+
+        /* 💡 月累積表格手KEY專用樣式 */
+        .editable-cell { cursor: text; background-color: #fafafa; }
+        .editable-cell:hover { background-color: #e6f7ff; }
+        .editable-cell:focus { outline: 2px solid #1890ff; background-color: #fff; }
 
         /* === 列印專屬排版 === */
         @page { size: A4 portrait; margin: 5mm; } 
@@ -39,6 +48,7 @@
             table { font-size: 11px; margin-bottom: 5px; } 
             .table-title { font-size: 13px; margin: 5px 0 2px 0; padding: 2px; } 
             #report-section { page-break-inside: avoid; }
+            .editable-cell { background-color: transparent !important; } /* 印出來不要有底色 */
         }
     </style>
 </head>
@@ -46,7 +56,7 @@
 
 <div class="container">
     <div class="input-section no-print">
-        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v8.4 框線修復版)</h3>
+        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v8.7 專屬欄位全面粗體版)</h3>
         
         <div class="input-group">
             <div class="input-box">
@@ -239,9 +249,9 @@
             const d = monthlyData[i] || { trans: '', pl: '', discount: '' };
             html += `<tr>
                 <td>${i}月</td>
-                <td style="text-align: right; padding-right:5px;">${d.trans === '' ? '' : formatNumber(d.trans)}</td>
-                <td style="text-align: right; padding-right:5px;">${d.pl === '' ? '' : formatNumber(d.pl)}</td>
-                <td style="text-align: right; padding-right:5px;">${d.discount === '' ? '' : formatNumber(d.discount)}</td>
+                <td class="editable-cell" contenteditable="true" style="text-align: right; padding-right:5px;">${d.trans === '' ? '' : formatNumber(d.trans)}</td>
+                <td class="editable-cell" contenteditable="true" style="text-align: right; padding-right:5px;">${d.pl === '' ? '' : formatNumber(d.pl)}</td>
+                <td class="editable-cell" contenteditable="true" style="text-align: right; padding-right:5px;">${d.discount === '' ? '' : formatNumber(d.discount)}</td>
             </tr>`;
             
             sumTrans += Number(d.trans) || 0;
@@ -251,9 +261,9 @@
         
         html += `<tr style="font-weight:bold;">
             <td>合計</td>
-            <td style="text-align: right; padding-right:5px;">${sumTrans === 0 ? '' : formatNumber(sumTrans)}</td>
-            <td style="text-align: right; padding-right:5px;">${sumPL === 0 ? '' : formatNumber(sumPL)}</td>
-            <td style="text-align: right; padding-right:5px;">${sumDiscount === 0 ? '' : formatNumber(sumDiscount)}</td>
+            <td class="editable-cell" contenteditable="true" style="text-align: right; padding-right:5px;">${sumTrans === 0 ? '' : formatNumber(sumTrans)}</td>
+            <td class="editable-cell" contenteditable="true" style="text-align: right; padding-right:5px;">${sumPL === 0 ? '' : formatNumber(sumPL)}</td>
+            <td class="editable-cell" contenteditable="true" style="text-align: right; padding-right:5px;">${sumDiscount === 0 ? '' : formatNumber(sumDiscount)}</td>
         </tr>`;
         
         tbody.innerHTML = html;
@@ -329,7 +339,7 @@
             
             const newPLTotal = prevPLInput + totalPL;
             
-            // 💡 魔法對齊區修復：把 hidden 全部換成 none！
+            // 💡 魔法對齊區
             transHtml += `
             <tr style="font-weight: bold; background-color: #fcfcff;">
                 <td colspan="6" style="text-align: right; padding-right: 15px;">本日總計：</td>
@@ -361,6 +371,7 @@
             const invLines = invText.split('\n');
             for (let i = 0; i < invLines.length; i++) {
                 const cols = invLines[i].split('\t').map(c => c.trim());
+                // 💡 沿用妳專屬的庫存資料索引值 (cols[3], cols[1]...)
                 const qty = safeParseInt(cols[3]);
                 
                 if (cols.length >= 10 && qty > 0) {
@@ -431,6 +442,9 @@
         localStorage.setItem('savedPLTotal', newPLTotal);
         localStorage.setItem('savedBankTotal', newBankTotal);
         
+        // 將可編輯表格(contenteditable)的內容存下來
+        localStorage.setItem('monthlyTableData', document.getElementById('monthly-tbody').innerHTML);
+        
         renderMonthlyTable();
         
         document.querySelector('#trans-table tbody').innerHTML = transHtml || '<tr><td colspan="9">無交易資料</td></tr>';
@@ -444,6 +458,4 @@
 </script>
 
 </body>
-
 </html>
-
