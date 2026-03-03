@@ -12,28 +12,29 @@
         .input-group { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
         .input-box { flex: 1; }
         
-        /* 💡 把輸入框裡的字體也都設定為粗體 */
-        textarea { width: 100%; height: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; font-family: monospace; white-space: pre; font-weight: bold; }
-        input[type="text"], select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; font-weight: bold; }
+        textarea { width: 100%; height: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; font-family: monospace; white-space: pre; font-weight: bold; font-size: 14px; }
+        input[type="text"], select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; font-weight: bold; }
         
-        button { background-color: #2c3e50; color: white; border: none; padding: 8px 20px; font-size: 14px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; transition: background 0.3s; margin-top: 5px; }
+        button { background-color: #2c3e50; color: white; border: none; padding: 8px 20px; font-size: 15px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; transition: background 0.3s; margin-top: 5px; }
         button:hover { background-color: #1a252f; }
         
         /* === 報表顯示區 === */
         #report-section { background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
         
-        /* 💡 在這裡加入 font-weight: bold; 讓所有表格資料(td)都變成粗體 */
-        th, td { border: 1px solid black; padding: 2px 3px; text-align: center; line-height: 1.1; white-space: nowrap; font-weight: bold; } 
+        /* 💡 將表格預設字體稍微放大 (12px -> 13px) */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; }
+        
+        /* 💡 增加一點點行高與 padding，讓變大的字體不擁擠，並維持粗體 */
+        th, td { border: 1px solid black; padding: 3px 4px; text-align: center; line-height: 1.2; white-space: nowrap; font-weight: bold; } 
         th { background-color: yellow !important; font-weight: bold; color: black; }
         
-        .table-title { background-color: #e0e0e0; color: black; font-size: 14px; font-weight: bold; text-align: center; margin: 10px 0 3px 0; padding: 3px; }
+        /* 💡 區塊標題字體放大 (14px -> 15px) */
+        .table-title { background-color: #e0e0e0; color: black; font-size: 15px; font-weight: bold; text-align: center; margin: 10px 0 3px 0; padding: 4px; }
         
         .side-by-side { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; page-break-inside: avoid; }
         .side-left { width: 48%; }
         .side-right { width: 48%; }
 
-        /* 💡 月累積表格手KEY專用樣式 */
         .editable-cell { cursor: text; background-color: #fafafa; }
         .editable-cell:hover { background-color: #e6f7ff; }
         .editable-cell:focus { outline: 2px solid #1890ff; background-color: #fff; }
@@ -45,10 +46,13 @@
             body { background-color: white; padding: 0; }
             .no-print { display: none !important; }
             #report-section { box-shadow: none; display: block !important; padding: 0; }
-            table { font-size: 11px; margin-bottom: 5px; } 
-            .table-title { font-size: 13px; margin: 5px 0 2px 0; padding: 2px; } 
+            
+            /* 💡 列印時字體也同步放大 (11px -> 12px) */
+            table { font-size: 12px; margin-bottom: 6px; } 
+            .table-title { font-size: 14px; margin: 6px 0 3px 0; padding: 3px; } 
+            
             #report-section { page-break-inside: avoid; }
-            .editable-cell { background-color: transparent !important; } /* 印出來不要有底色 */
+            .editable-cell { background-color: transparent !important; }
         }
     </style>
 </head>
@@ -56,26 +60,26 @@
 
 <div class="container">
     <div class="input-section no-print">
-        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v8.7 專屬欄位全面粗體版)</h3>
+        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v8.8 字體放大間距優化版)</h3>
         
         <div class="input-group">
             <div class="input-box">
-                <label style="font-size: 13px;"><b>▶ 前日【累計成交】</b></label>
+                <label style="font-size: 14px;"><b>▶ 前日【累計成交】</b></label>
                 <input type="text" id="prev-trans-total">
             </div>
             <div class="input-box">
-                <label style="font-size: 13px;"><b>▶ 前日【累計損益】</b></label>
+                <label style="font-size: 14px;"><b>▶ 前日【累計損益】</b></label>
                 <input type="text" id="prev-pl-total">
             </div>
             <div class="input-box">
-                <label style="font-size: 13px;"><b>▶ 前日【銀行餘額】</b></label>
+                <label style="font-size: 14px;"><b>▶ 前日【銀行餘額】</b></label>
                 <input type="text" id="prev-bank-total">
             </div>
         </div>
 
         <div class="input-group" style="background-color: #eef5f9; padding: 10px; border-radius: 5px; border: 1px dashed #b3d4fc;">
             <div class="input-box" style="flex: 0.6;">
-                <label style="font-size: 13px;"><b>📅 選擇月份</b></label>
+                <label style="font-size: 14px;"><b>📅 選擇月份</b></label>
                 <select id="month-select">
                     <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
                     <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
@@ -84,29 +88,29 @@
                 </select>
             </div>
             <div class="input-box">
-                <label style="font-size: 13px;"><b>成交金額</b></label>
+                <label style="font-size: 14px;"><b>成交金額</b></label>
                 <input type="text" id="month-trans">
             </div>
             <div class="input-box">
-                <label style="font-size: 13px;"><b>已實現損益</b></label>
+                <label style="font-size: 14px;"><b>已實現損益</b></label>
                 <input type="text" id="month-pl">
             </div>
             <div class="input-box">
-                <label style="font-size: 13px;"><b>折讓</b></label>
+                <label style="font-size: 14px;"><b>折讓</b></label>
                 <input type="text" id="month-discount">
             </div>
             <div class="input-box" style="flex: 0.7;">
-                <button type="button" onclick="saveMonthData()" style="margin: 0; background-color: #0078d7; font-size: 13px;">💾 記憶此月</button>
+                <button type="button" onclick="saveMonthData()" style="margin: 0; background-color: #0078d7; font-size: 14px;">💾 記憶此月</button>
             </div>
         </div>
 
         <div class="input-group">
             <div class="input-box">
-                <label style="font-size: 14px;"><b>1. 請貼上【當日交易匯總】</b></label>
+                <label style="font-size: 15px;"><b>1. 請貼上【當日交易匯總】</b></label>
                 <textarea id="raw-trans"></textarea>
             </div>
             <div class="input-box">
-                <label style="font-size: 14px;"><b>2. 請貼上【未實現損益(庫存)】</b></label>
+                <label style="font-size: 15px;"><b>2. 請貼上【未實現損益(庫存)】</b></label>
                 <textarea id="raw-inv"></textarea>
             </div>
         </div>
@@ -114,21 +118,21 @@
     </div>
 
     <div id="report-section">
-        <div style="text-align: center; margin-bottom: 10px;">
-            <div style="font-size: 18px; font-weight: bold; margin-bottom: 3px;">黃照興交易對帳單</div>
-            <div style="font-size: 13px;">日期： <span id="report-date" style="background-color: yellow; padding: 1px 15px; font-weight: bold;"></span></div>
+        <div style="text-align: center; margin-bottom: 12px;">
+            <div style="font-size: 20px; font-weight: bold; margin-bottom: 4px;">黃照興交易對帳單</div>
+            <div style="font-size: 14px;">日期： <span id="report-date" style="background-color: yellow; padding: 2px 18px; font-weight: bold;"></span></div>
         </div>
         
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
-            <div style="font-size: 14px; font-weight: bold;">
-                <span style="background-color: #e0e0e0; padding: 4px 15px; display: inline-block;">本日總成交 <span id="today-amount" style="font-weight: 900; font-size: 16px; margin-left: 5px;">0</span></span>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
+            <div style="font-size: 15px; font-weight: bold;">
+                <span style="background-color: #e0e0e0; padding: 4px 15px; display: inline-block;">本日總成交 <span id="today-amount" style="font-weight: 900; font-size: 18px; margin-left: 5px;">0</span></span>
             </div>
-            <div style="font-size: 14px; font-weight: bold;">
-                <span style="background-color: yellow; padding: 4px 15px; display: inline-block;">本月累計 <span id="accum-trans-amount" style="font-weight: 900; font-size: 16px; margin-left: 5px;">0</span></span>
+            <div style="font-size: 15px; font-weight: bold;">
+                <span style="background-color: yellow; padding: 4px 15px; display: inline-block;">本月累計 <span id="accum-trans-amount" style="font-weight: 900; font-size: 18px; margin-left: 5px;">0</span></span>
             </div>
         </div>
 
-        <table id="trans-table" style="margin-bottom: 10px;">
+        <table id="trans-table" style="margin-bottom: 12px;">
             <thead>
                 <tr>
                     <th>股票代碼</th><th>股票名稱</th><th>交易別</th><th>B/S</th>
@@ -139,7 +143,7 @@
         </table>
 
         <div class="table-title">本日庫存明細</div>
-        <table id="inv-whole-table" style="margin-bottom: 10px;">
+        <table id="inv-whole-table" style="margin-bottom: 0;">
             <thead>
                 <tr>
                     <th>股票代碼</th><th>股票名稱</th><th>交易別</th><th>均價</th><th>張數</th><th>市價</th><th>浮動盈虧</th><th>庫存市值</th>
@@ -148,7 +152,7 @@
             <tbody></tbody>
         </table>
 
-        <div class="side-by-side">
+        <div class="side-by-side" style="margin-top: 25px;">
             <div class="side-left">
                 <div class="table-title" style="margin-top: 0;">零股庫存明細</div>
                 <table id="inv-odd-table">
@@ -181,8 +185,8 @@
                             <td colspan="3" style="font-weight: bold; text-align: center;">本日銀行可用餘額</td>
                         </tr>
                         <tr>
-                            <td id="bank-date" style="text-align: center; font-size: 13px; font-weight: bold;"></td>
-                            <td colspan="3" id="bank-balance-amount" style="text-align: center; font-size: 15px; font-weight: 900;"></td>
+                            <td id="bank-date" style="text-align: center; font-size: 14px; font-weight: bold;"></td>
+                            <td colspan="3" id="bank-balance-amount" style="text-align: center; font-size: 16px; font-weight: 900;"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -339,7 +343,6 @@
             
             const newPLTotal = prevPLInput + totalPL;
             
-            // 💡 魔法對齊區
             transHtml += `
             <tr style="font-weight: bold; background-color: #fcfcff;">
                 <td colspan="6" style="text-align: right; padding-right: 15px;">本日總計：</td>
@@ -352,18 +355,18 @@
             </tr>
             <tr>
                 <td colspan="7" style="border: none; background-color: white;"></td>
-                <td style="border: 1px solid black; text-align: center; background-color: white; font-weight: bold; font-size: 13px;">本日損益</td>
-                <td style="border: 1px solid black; background-color: yellow !important; text-align: right; padding-right: 8px; font-weight: 900; font-size: 14px;">${formatNumber(totalPL)}</td>
+                <td style="border: 1px solid black; text-align: center; background-color: white; font-weight: bold; font-size: 14px;">本日損益</td>
+                <td style="border: 1px solid black; background-color: yellow !important; text-align: right; padding-right: 8px; font-weight: 900; font-size: 15px;">${formatNumber(totalPL)}</td>
             </tr>
             <tr>
                 <td colspan="7" style="border: none; background-color: white;"></td>
-                <td style="border: 1px solid black; text-align: center; background-color: white; font-weight: bold; font-size: 13px;">前日損益</td>
-                <td style="border: 1px solid black; background-color: yellow !important; text-align: right; padding-right: 8px; font-weight: 900; font-size: 14px;">${formatNumber(prevPLInput)}</td>
+                <td style="border: 1px solid black; text-align: center; background-color: white; font-weight: bold; font-size: 14px;">前日損益</td>
+                <td style="border: 1px solid black; background-color: yellow !important; text-align: right; padding-right: 8px; font-weight: 900; font-size: 15px;">${formatNumber(prevPLInput)}</td>
             </tr>
             <tr>
                 <td colspan="7" style="border: none; background-color: white;"></td>
-                <td style="border: 1px solid black; text-align: center; background-color: white; font-weight: bold; font-size: 13px;">本月累計</td>
-                <td style="border: 1px solid black; background-color: yellow !important; text-align: right; padding-right: 8px; font-weight: 900; font-size: 14px;">${formatNumber(newPLTotal)}</td>
+                <td style="border: 1px solid black; text-align: center; background-color: white; font-weight: bold; font-size: 14px;">本月累計</td>
+                <td style="border: 1px solid black; background-color: yellow !important; text-align: right; padding-right: 8px; font-weight: 900; font-size: 15px;">${formatNumber(newPLTotal)}</td>
             </tr>`;
         }
 
@@ -371,7 +374,6 @@
             const invLines = invText.split('\n');
             for (let i = 0; i < invLines.length; i++) {
                 const cols = invLines[i].split('\t').map(c => c.trim());
-                // 💡 沿用妳專屬的庫存資料索引值 (cols[3], cols[1]...)
                 const qty = safeParseInt(cols[3]);
                 
                 if (cols.length >= 10 && qty > 0) {
@@ -442,7 +444,6 @@
         localStorage.setItem('savedPLTotal', newPLTotal);
         localStorage.setItem('savedBankTotal', newBankTotal);
         
-        // 將可編輯表格(contenteditable)的內容存下來
         localStorage.setItem('monthlyTableData', document.getElementById('monthly-tbody').innerHTML);
         
         renderMonthlyTable();
