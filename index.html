@@ -56,7 +56,7 @@
 
 <div class="container">
     <div class="input-section no-print">
-        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v9.0 新增提款功能)</h3>
+        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v9.1 類別自動判斷版)</h3>
         
         <div class="input-group">
             <div class="input-box">
@@ -213,7 +213,6 @@
         const savedBank = localStorage.getItem('savedBankTotal');
         if (savedBank) document.getElementById('prev-bank-total').value = savedBank;
 
-        // 載入提款記憶
         const savedWithdraw = localStorage.getItem('savedWithdrawAmount');
         if (savedWithdraw) document.getElementById('today-withdraw-amount').value = savedWithdraw;
 
@@ -303,7 +302,6 @@
         const prevPLInput = safeParseInt(document.getElementById('prev-pl-total').value);
         const prevBankInput = safeParseInt(document.getElementById('prev-bank-total').value);
         
-        // 💡 取得今天輸入的提款金額
         const withdrawInput = safeParseInt(document.getElementById('today-withdraw-amount').value);
 
         if (!transText && !invText) {
@@ -393,7 +391,8 @@
                     const name = cols[2];
                     const price = cols[8];
                     
-                    const type = "融資"; 
+                    // 💡 修正：直接讀取第一欄 (cols[0]) 的類別名稱，沒有則預設空白
+                    const type = cols[0] || "-"; 
                     const avgPrice = cols[7] || "-"; 
                     
                     const valueVal = safeParseInt(cols[5]);
@@ -446,13 +445,11 @@
         const newTransTotal = prevTransInput + totalTransAmount;
         const newPLTotal = prevPLInput + totalPL;
         
-        // 💡 銀行可用餘額計算：加入扣除提款的功能！
         const newBankTotal = prevBankInput + totalNetPay - withdrawInput;
 
         document.getElementById('today-amount').innerText = formatNumber(totalTransAmount);
         document.getElementById('accum-trans-amount').innerText = formatNumber(newTransTotal);
 
-        // 顯示提款金額與最新餘額
         document.getElementById('display-withdraw-amount').innerText = formatNumber(withdrawInput);
         document.getElementById('bank-balance-amount').innerText = formatNumber(newBankTotal);
 
