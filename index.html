@@ -48,6 +48,8 @@
             table { font-size: 12px; margin-bottom: 6px; } 
             .table-title { font-size: 14px; margin: 6px 0 3px 0; padding: 3px; } 
             #report-section { page-break-inside: avoid; }
+            /* 防止最下方的表格被切斷 */
+            #extra-inv-section { page-break-inside: avoid; }
             .editable-cell { background-color: transparent !important; } /* 印出來不要有底色 */
         }
     </style>
@@ -56,7 +58,7 @@
 
 <div class="container">
     <div class="input-section no-print">
-        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v9.1 類別自動判斷版)</h3>
+        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v10.0 獨立附加庫存版)</h3>
         
         <div class="input-group">
             <div class="input-box">
@@ -114,6 +116,13 @@
                 <textarea id="raw-inv"></textarea>
             </div>
         </div>
+        <div class="input-group">
+            <div class="input-box">
+                <label style="font-size: 15px;"><b>3. 請貼上【未實現損益(庫存) - 附加】</b></label>
+                <textarea id="raw-inv-extra" placeholder="貼在這裡的資料會產生一個完全獨立的表格，放在最下方"></textarea>
+            </div>
+        </div>
+
         <button onclick="processData()">產生報表並列印</button>
     </div>
 
@@ -146,7 +155,7 @@
         <table id="inv-whole-table" style="margin-bottom: 0;">
             <thead>
                 <tr>
-                    <th>股票代碼</th><th>股票名稱</th><th>交易別</th><th>均價</th><th>張數</th><th>市價</th><th>浮動盈虧</th><th>庫存市值</th>
+                    <th>股票代碼</th><th>股票名稱</th><th>類別</th><th>均價</th><th>張數</th><th>市價</th><th>浮動盈虧</th><th>庫存市值</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -196,6 +205,18 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+        
+        <div id="extra-inv-section" style="display: none; margin-top: 25px;">
+            <div class="table-title" style="background-color: #cce5ff;">附加庫存明細</div>
+            <table id="inv-extra-table" style="margin-bottom: 0;">
+                <thead>
+                    <tr>
+                        <th>股票代碼</th><th>股票名稱</th><th>類別</th><th>均價</th><th>數量</th><th>市價</th><th>浮動盈虧</th><th>庫存市值</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -297,6 +318,8 @@
     function processData() {
         const transText = document.getElementById('raw-trans').value.trim();
         const invText = document.getElementById('raw-inv').value.trim();
+        // 💡 取得第 3 格獨立庫存資料
+        const invExtraText = document.getElementById('raw-inv-extra').value.trim();
         
         const prevTransInput = safeParseInt(document.getElementById('prev-trans-total').value);
         const prevPLInput = safeParseInt(document.getElementById('prev-pl-total').value);
@@ -304,8 +327,8 @@
         
         const withdrawInput = safeParseInt(document.getElementById('today-withdraw-amount').value);
 
-        if (!transText && !invText) {
-            alert("請至少貼上一邊的資料喔！");
+        if (!transText && !invText && !invExtraText) {
+            alert("請至少貼上一個表格的資料喔！");
             return;
         }
 
@@ -316,10 +339,15 @@
         let totalWholePL = 0;
         let totalWholeValue = 0;
         let totalOddValue = 0;
+        
+        // 💡 第 3 格專屬獨立計算變數
+        let totalExtraPL = 0;
+        let totalExtraValue = 0;
 
         let transHtml = '';
         let invWholeHtml = '';
         let invOddHtml = '';
+        let invExtraHtml = '';
 
         if (transText) {
             const transLines = transText.split('\n');
@@ -391,7 +419,6 @@
                     const name = cols[2];
                     const price = cols[8];
                     
-                    // 💡 修正：直接讀取第一欄 (cols[0]) 的類別名稱，沒有則預設空白
                     const type = cols[0] || "-"; 
                     const avgPrice = cols[7] || "-"; 
                     
@@ -433,6 +460,49 @@
                 </tr>`;
             }
         }
+        
+        // 💡 處理第 3 格獨立庫存資料
+        if (invExtraText) {
+            const invLines = invExtraText.split('\n');
+            for (let i = 0; i < invLines.length; i++) {
+                const cols = invLines[i].split('\t').map(c => c.trim());
+                const qty = safeParseInt(cols[3]);
+                
+                if (cols.length >= 10 && qty > 0) {
+                    const code = cols[1];
+                    const name = cols[2];
+                    const price = cols[8];
+                    
+                    const type = cols[0] || "-"; 
+                    const avgPrice = cols[7] || "-"; 
+                    
+                    const valueVal = safeParseInt(cols[5]);
+                    const plVal = safeParseInt(cols[11]);
+
+                    if (name !== '彥武' && code !== '') {
+                        totalExtraPL += plVal;
+                        totalExtraValue += valueVal;
+                        
+                        // 自動判斷顯示整張還是零股股數
+                        let displayQty = qty % 1000 === 0 ? qty / 1000 : qty;
+                        
+                        invExtraHtml += `<tr>
+                            <td>${code}</td><td>${name}</td><td>${type}</td><td>${avgPrice}</td><td>${displayQty}</td>
+                            <td>${price}</td><td>${formatNumber(plVal)}</td><td>${formatNumber(valueVal)}</td>
+                        </tr>`;
+                    }
+                }
+            }
+            
+            if (invExtraHtml !== '') {
+                invExtraHtml += `
+                <tr style="font-weight: bold;">
+                    <td colspan="6" style="text-align: right; padding-right: 15px;">附加庫存總計：</td>
+                    <td>${formatNumber(totalExtraPL)}</td>
+                    <td>${formatNumber(totalExtraValue)}</td>
+                </tr>`;
+            }
+        }
 
         const today = new Date();
         const month = today.getMonth() + 1;
@@ -444,7 +514,6 @@
 
         const newTransTotal = prevTransInput + totalTransAmount;
         const newPLTotal = prevPLInput + totalPL;
-        
         const newBankTotal = prevBankInput + totalNetPay - withdrawInput;
 
         document.getElementById('today-amount').innerText = formatNumber(totalTransAmount);
@@ -465,6 +534,14 @@
         document.querySelector('#trans-table tbody').innerHTML = transHtml || '<tr><td colspan="9">無交易資料</td></tr>';
         document.querySelector('#inv-whole-table tbody').innerHTML = invWholeHtml || '<tr><td colspan="8">無整股庫存資料</td></tr>';
         document.querySelector('#inv-odd-table tbody').innerHTML = invOddHtml || '<tr><td colspan="5">無零股庫存資料</td></tr>';
+        
+        // 💡 渲染獨立庫存區塊
+        if (invExtraHtml !== '') {
+            document.querySelector('#inv-extra-table tbody').innerHTML = invExtraHtml;
+            document.getElementById('extra-inv-section').style.display = 'block';
+        } else {
+            document.getElementById('extra-inv-section').style.display = 'none';
+        }
 
         document.getElementById('report-section').style.display = 'block';
 
