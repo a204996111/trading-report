@@ -48,9 +48,8 @@
             table { font-size: 12px; margin-bottom: 6px; } 
             .table-title { font-size: 14px; margin: 6px 0 3px 0; padding: 3px; } 
             #report-section { page-break-inside: avoid; }
-            /* 防止最下方的表格被切斷 */
             #extra-inv-section { page-break-inside: avoid; }
-            .editable-cell { background-color: transparent !important; } /* 印出來不要有底色 */
+            .editable-cell { background-color: transparent !important; } 
         }
     </style>
 </head>
@@ -58,7 +57,7 @@
 
 <div class="container">
     <div class="input-section no-print">
-        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v10.0 獨立附加庫存版)</h3>
+        <h3 style="text-align: center; margin-top: 0;">📊 交易對帳單產生器 (v10.1 存提款雙向版)</h3>
         
         <div class="input-group">
             <div class="input-box">
@@ -73,9 +72,10 @@
                 <label style="font-size: 14px;"><b>▶ 前日【銀行餘額】</b></label>
                 <input type="text" id="prev-bank-total">
             </div>
+            <!-- 💡 更新：銀行存提輸入框 -->
             <div class="input-box">
-                <label style="font-size: 14px;"><b>▶ 本日【銀行提款】</b></label>
-                <input type="text" id="today-withdraw-amount" placeholder="若無提款留白即可">
+                <label style="font-size: 14px;"><b>▶ 本日【銀行存提】</b></label>
+                <input type="text" id="today-bank-flow" placeholder="存款打正數，提款打負數">
             </div>
         </div>
 
@@ -173,9 +173,10 @@
                     <tbody></tbody>
                 </table>
                 
+                <!-- 💡 左下角更新為存提 -->
                 <div style="margin-top: 15px; font-size: 14px; font-weight: bold;">
-                    <span style="background-color: #e0e0e0; padding: 4px 10px; border: 1px solid black;">本日銀行提款</span>
-                    <span id="display-withdraw-amount" style="margin-left: 10px; font-size: 16px; font-weight: 900;">0</span>
+                    <span style="background-color: #e0e0e0; padding: 4px 10px; border: 1px solid black;">本日銀行存提</span>
+                    <span id="display-bank-flow" style="margin-left: 10px; font-size: 16px; font-weight: 900;">0</span>
                 </div>
             </div>
 
@@ -191,7 +192,8 @@
                         </tr>
                     </thead>
                     <tbody id="monthly-tbody">
-                        </tbody>
+                        <!-- JS 會自動填入 -->
+                    </tbody>
                     <tbody>
                         <tr><td colspan="4" style="border: none; height: 5px;"></td></tr>
                         <tr>
@@ -234,8 +236,9 @@
         const savedBank = localStorage.getItem('savedBankTotal');
         if (savedBank) document.getElementById('prev-bank-total').value = savedBank;
 
-        const savedWithdraw = localStorage.getItem('savedWithdrawAmount');
-        if (savedWithdraw) document.getElementById('today-withdraw-amount').value = savedWithdraw;
+        // 💡 載入存提紀錄
+        const savedBankFlow = localStorage.getItem('savedBankFlowAmount');
+        if (savedBankFlow) document.getElementById('today-bank-flow').value = savedBankFlow;
 
         const savedMonthlyObj = localStorage.getItem('monthlyDataObj');
         if (savedMonthlyObj) {
@@ -318,14 +321,14 @@
     function processData() {
         const transText = document.getElementById('raw-trans').value.trim();
         const invText = document.getElementById('raw-inv').value.trim();
-        // 💡 取得第 3 格獨立庫存資料
         const invExtraText = document.getElementById('raw-inv-extra').value.trim();
         
         const prevTransInput = safeParseInt(document.getElementById('prev-trans-total').value);
         const prevPLInput = safeParseInt(document.getElementById('prev-pl-total').value);
         const prevBankInput = safeParseInt(document.getElementById('prev-bank-total').value);
         
-        const withdrawInput = safeParseInt(document.getElementById('today-withdraw-amount').value);
+        // 💡 取得存提款數字
+        const bankFlowInput = safeParseInt(document.getElementById('today-bank-flow').value);
 
         if (!transText && !invText && !invExtraText) {
             alert("請至少貼上一個表格的資料喔！");
@@ -340,7 +343,6 @@
         let totalWholeValue = 0;
         let totalOddValue = 0;
         
-        // 💡 第 3 格專屬獨立計算變數
         let totalExtraPL = 0;
         let totalExtraValue = 0;
 
@@ -461,7 +463,6 @@
             }
         }
         
-        // 💡 處理第 3 格獨立庫存資料
         if (invExtraText) {
             const invLines = invExtraText.split('\n');
             for (let i = 0; i < invLines.length; i++) {
@@ -483,7 +484,6 @@
                         totalExtraPL += plVal;
                         totalExtraValue += valueVal;
                         
-                        // 自動判斷顯示整張還是零股股數
                         let displayQty = qty % 1000 === 0 ? qty / 1000 : qty;
                         
                         invExtraHtml += `<tr>
@@ -514,18 +514,20 @@
 
         const newTransTotal = prevTransInput + totalTransAmount;
         const newPLTotal = prevPLInput + totalPL;
-        const newBankTotal = prevBankInput + totalNetPay - withdrawInput;
+        
+        // 💡 邏輯改為「加法」，這樣正數(存款)會增加餘額，負數(提款)會扣除餘額
+        const newBankTotal = prevBankInput + totalNetPay + bankFlowInput;
 
         document.getElementById('today-amount').innerText = formatNumber(totalTransAmount);
         document.getElementById('accum-trans-amount').innerText = formatNumber(newTransTotal);
 
-        document.getElementById('display-withdraw-amount').innerText = formatNumber(withdrawInput);
+        document.getElementById('display-bank-flow').innerText = formatNumber(bankFlowInput);
         document.getElementById('bank-balance-amount').innerText = formatNumber(newBankTotal);
 
         localStorage.setItem('savedTransTotal', newTransTotal);
         localStorage.setItem('savedPLTotal', newPLTotal);
         localStorage.setItem('savedBankTotal', newBankTotal);
-        localStorage.setItem('savedWithdrawAmount', withdrawInput);
+        localStorage.setItem('savedBankFlowAmount', bankFlowInput);
         
         localStorage.setItem('monthlyTableData', document.getElementById('monthly-tbody').innerHTML);
         
@@ -535,7 +537,6 @@
         document.querySelector('#inv-whole-table tbody').innerHTML = invWholeHtml || '<tr><td colspan="8">無整股庫存資料</td></tr>';
         document.querySelector('#inv-odd-table tbody').innerHTML = invOddHtml || '<tr><td colspan="5">無零股庫存資料</td></tr>';
         
-        // 💡 渲染獨立庫存區塊
         if (invExtraHtml !== '') {
             document.querySelector('#inv-extra-table tbody').innerHTML = invExtraHtml;
             document.getElementById('extra-inv-section').style.display = 'block';
